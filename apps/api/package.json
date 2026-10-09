@@ -1,0 +1,42 @@
+{
+  "name": "@forgeflow/api",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "migrate": "tsx src/db/migrate.ts",
+    "test": "tsx test/idempotency.test.ts && tsx test/outbox.test.ts && tsx test/load-balancer.test.ts && tsx test/observability.test.ts && tsx test/prometheus-metrics.test.ts && tsx test/grafana.test.ts && tsx test/distributed-tracing.test.ts",
+    "test:lb": "tsx test/load-balancer.test.ts",
+    "test:obs": "tsx test/observability.test.ts",
+    "test:metrics": "tsx test/prometheus-metrics.test.ts",
+    "test:grafana": "tsx test/grafana.test.ts",
+    "test:tracing": "tsx test/distributed-tracing.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@forgeflow/shared": "*",
+    "amqplib": "^2.0.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.5",
+    "redis": "^6.2.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.8",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.12.7",
+    "@types/pg": "^8.11.5",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.5"
+  }
+}

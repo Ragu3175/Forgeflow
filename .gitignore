@@ -1,0 +1,144 @@
+# ==========================================
+# Dependencies
+# ==========================================
+node_modules/
+.pnp/
+.pnp.js
+
+# ==========================================
+# Environment variables and secrets
+# ==========================================
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# ==========================================
+# Build outputs
+# ==========================================
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+.tsbuildinfo
+
+# Vite & Frontend
+.vite/
+apps/web/dist/
+apps/web/.vite/
+
+# ==========================================
+# Logs and runtime files
+# ==========================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+pids/
+*.pid
+*.pid.lock
+*.seed
+
+# ==========================================
+# Testing and temporary files
+# ==========================================
+.nyc_output/
+.tmp/
+.temp/
+.cache/
+.eslintcache
+playwright-report/
+test-results/
+
+# Scratch & local experimentation scripts
+scratch/
+
+# ==========================================
+# Local databases and data
+# ==========================================
+*.sqlite
+*.sqlite3
+*.db
+
+# Never commit local database dumps
+*.sql.dump
+*.dump
+*.backup
+
+# ==========================================
+# Docker / local infrastructure data
+# ==========================================
+# Local bind-mounted persistent data
+postgres-data/
+postgres_data/
+redis-data/
+redis_data/
+rabbitmq-data/
+rabbitmq_data/
+prometheus-data/
+prometheus_data/
+grafana-data/
+grafana_data/
+jaeger-data/
+jaeger_data/
+
+# Docker compose local overrides
+docker-compose.override.yml
+docker-compose.*.local.yml
+
+# ==========================================
+# IDEs and editors
+# ==========================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json
+!.vscode/launch.json
+
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swo
+*.swp
+*~
+
+# ==========================================
+# Operating system files
+# ==========================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ==========================================
+# Local environment and tooling
+# ==========================================
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl

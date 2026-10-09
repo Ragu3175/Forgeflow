@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  # ForgeFlow API instances (api1 and api2 behind Nginx)
+  - job_name: 'forgeflow-api'
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['api1:4000', 'api2:4000']
+        labels:
+          service: 'forgeflow-api'
+
+  # ForgeFlow Worker instances
+  - job_name: 'forgeflow-worker'
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['worker:9102']
+        labels:
+          service: 'forgeflow-worker'

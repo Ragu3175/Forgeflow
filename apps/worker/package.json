@@ -1,0 +1,28 @@
+{
+  "name": "@forgeflow/worker",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "tsx test/retries.test.ts && tsx test/worker-idempotency.test.ts && tsx test/rabbitmq-retry-dlq.test.ts",
+    "test:e2e": "tsx test/e2e-docker.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@forgeflow/shared": "*",
+    "amqplib": "^0.10.4",
+    "dotenv": "^16.4.5",
+    "pg": "^8.11.5",
+    "redis": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.5",
+    "@types/node": "^20.12.7",
+    "@types/pg": "^8.11.5",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.5"
+  }
+}

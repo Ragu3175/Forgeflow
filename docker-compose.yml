@@ -1,0 +1,245 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: forgeflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-forgeflow}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-forgeflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  redis:
+    image: redis:7-alpine
+    container_name: forgeflow-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 3s
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: forgeflow-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 15s
+      retries: 5
+      start_period: 10s
+
+  api1:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: forgeflow-api1
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      INSTANCE_ID: api-1
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-forgeflow}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672}
+      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_change_me_in_production}
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGIN: http://localhost:5173
+      OTEL_SERVICE_NAME: forgeflow-api-1
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      OTEL_TRACES_ENABLED: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      jaeger:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  api2:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: forgeflow-api2
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      INSTANCE_ID: api-2
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-forgeflow}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672}
+      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_change_me_in_production}
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGIN: http://localhost:5173
+      OTEL_SERVICE_NAME: forgeflow-api-2
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      OTEL_TRACES_ENABLED: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      jaeger:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: forgeflow-nginx
+    restart: unless-stopped
+    ports:
+      - "4000:80"
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      api1:
+        condition: service_healthy
+      api2:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/nginx-health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: forgeflow-worker
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      METRICS_PORT: 9102
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-forgeflow}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672}
+      OTEL_SERVICE_NAME: forgeflow-worker
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      OTEL_TRACES_ENABLED: "true"
+    ports:
+      - "9102:9102"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      jaeger:
+        condition: service_healthy
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: forgeflow-jaeger
+    restart: unless-stopped
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:16686/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: forgeflow-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    depends_on:
+      api1:
+        condition: service_healthy
+      api2:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:10.4.1
+    container_name: forgeflow-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: forgeflow-web
+    restart: unless-stopped
+    environment:
+      API_URL: http://nginx:80
+    ports:
+      - "5173:5173"
+    depends_on:
+      nginx:
+        condition: service_started
+
+volumes:
+  postgres_data:
+    name: forgeflow_postgres_data
+  grafana_data:
+    name: forgeflow_grafana_data
+
+
+

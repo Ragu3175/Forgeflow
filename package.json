@@ -1,0 +1,32 @@
+{
+  "name": "forgeflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Distributed job-processing platform (V1 Foundation)",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:worker": "npm run dev --workspace=apps/worker",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev": "npm run dev:api",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "migrate": "npm run migrate --workspace=apps/api"
+  },
+  "keywords": [
+    "job-processing",
+    "distributed-systems",
+    "express",
+    "react",
+    "postgresql",
+    "redis",
+    "rabbitmq",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC"
+}
